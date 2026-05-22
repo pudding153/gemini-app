@@ -102,7 +102,22 @@
 <script>
   const chatContainer = document.getElementById('chat-container');
   const userInput = document.getElementById('userInput');
-  let conversationHistory = [];
+  let conversationHistory = JSON.parse(sessionStorage.getItem('chatHistory')) || [];
+
+  window.addEventListener('DOMContentLoaded', () => {
+    conversationHistory.forEach(msg => {
+      const div = document.createElement('div');
+      if (msg.role === 'user') {
+        div.className = 'message user-message';
+        div.textContent = msg.parts[0].text;
+      } else if (msg.role === 'model') {
+        div.className = 'message ai-message';
+        div.textContent = msg.parts[0].text;
+      }
+      chatContainer.appendChild(div);
+    });
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  });
 
   function handleKeyPress(event) {
     if (event.key === 'Enter') {
@@ -110,7 +125,6 @@
     }
   }
 
-  刻む演出
   function typeWriter(element, text, index = 0) {
     if (index < text.length) {
       element.textContent += text.charAt(index);
@@ -132,6 +146,7 @@
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
     conversationHistory.push({ role: 'user', parts: [{ text: text }] });
+    sessionStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
 
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'loading-message';
@@ -156,6 +171,7 @@
       typeWriter(aiDiv, data.text);
 
       conversationHistory.push({ role: 'model', parts: [{ text: data.text }] });
+      sessionStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
 
     } catch (error) {
       loadingDiv.remove();
