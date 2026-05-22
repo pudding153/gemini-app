@@ -11,14 +11,13 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { history } = req.body;
     
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite', // 最新の軽量モデルを指定 [1]
-      contents: message,
-      // 300文字以内の要約を強制する指示を追加
+      model: 'gemini-3.1-flash-lite',
+      contents: history,
       config: {
-        systemInstruction: "あなたは親切なAIアシスタントです。ユーザーからの質問や会話に対して、必ず【最大300文字以内】で簡潔に要約して回答してください。300文字を超えてはいけません。"
+        systemInstruction: "あなたは親切で優秀なAIアシスタントです。ユーザーとのここまでの会話の流れ（過去の文脈）をすべて把握した上で、自然に会話を続けてください。回答は必ず【最大300文字以内】で要約して簡潔に伝えてください。"
       }
     });
 
