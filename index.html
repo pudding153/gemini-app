@@ -16,7 +16,6 @@
       height: 100vh;
     }
 
-    /* 常に画面左上に固定するスタイル */
     #reset-btn {
       position: fixed;
       top: 10px;
@@ -24,12 +23,12 @@
       padding: 6px 12px;
       border: 1px solid #ff4d4d;
       border-radius: 15px;
-      background-color: #1e1e1e; /* スクロールした文字と被っても見やすいように背景色を指定 */
+      background-color: #1e1e1e;
       color: #ff4d4d;
       font-size: 13px;
       font-weight: bold;
       cursor: pointer;
-      z-index: 100; /* 最前面に表示 */
+      z-index: 100;
       transition: background-color 0.2s;
     }
 
@@ -40,7 +39,7 @@
     #chat-container {
       flex: 1;
       overflow-y: auto;
-      padding: 50px 20px 20px 20px; /* 最初のメッセージがボタンに被らないように上部余白 */
+      padding: 50px 20px 20px 20px;
       display: flex;
       flex-direction: column;
       gap: 15px;
@@ -79,12 +78,14 @@
 
     .input-area {
       display: flex;
+      align-items: flex-end; /* テキストエリアが伸びてもボタンが下に固定されるように設定 */
       padding: 10px;
       background-color: #2d2d2d;
       gap: 10px;
     }
 
-    input {
+    /* inputからtextareaに変更し、自動高さ調整に対応 */
+    textarea {
       flex: 1;
       padding: 12px;
       border: none;
@@ -93,10 +94,14 @@
       color: #ffffff;
       font-size: 16px;
       outline: none;
+      resize: none; /* ユーザーが手動でサイズ変更するのを禁止 */
+      height: 24px; /* 初期高さ */
+      font-family: sans-serif;
+      line-height: 1.5;
     }
 
     .send-btn {
-      padding: 0 20px;
+      padding: 12px 20px; /* 入力欄と高さを合わせる */
       border: none;
       border-radius: 20px;
       background-color: #3a86ff;
@@ -104,6 +109,7 @@
       font-size: 15px;
       font-weight: bold;
       cursor: pointer;
+      height: 48px;
     }
 
     .send-btn:active {
@@ -113,13 +119,13 @@
 </head>
 <body>
 
-  <!-- 常に固定表示されるリセットボタン -->
   <button id="reset-btn" onclick="clearHistory()">リセット</button>
 
   <div id="chat-container"></div>
 
   <div class="input-area">
-    <input type="text" id="userInput" placeholder="メッセージを入力..." onkeypress="handleKeyPress(event)">
+    <!-- inputからtextareaに変更 -->
+    <textarea id="userInput" placeholder="メッセージを入力..." oninput="adjustHeight()"></textarea>
     <button class="send-btn" onclick="sendMessage()">送信</button>
   </div>
 
@@ -137,7 +143,6 @@
     conversationHistory = [];
   }
 
-  // 画面にメッセージを表示する関数（不具合修正：msg.parts[0].text から文字を読み込むように変更）
   function renderMessage(msg) {
     const div = document.createElement('div');
     if (msg.role === 'user') {
@@ -165,10 +170,10 @@
     }
   }
 
-  function handleKeyPress(event) {
-    if (event.key === 'Enter') {
-      sendMessage();
-    }
+  /* 入力文字数に合わせてテキストエリアの高さを自動調整する関数 */
+  function adjustHeight() {
+    userInput.style.height = '24px'; /* 一度リセット */
+    userInput.style.height = (userInput.scrollHeight - 24) + 'px'; /* 中身に合わせて伸縮 */
   }
 
   function typeWriter(element, text, index = 0) {
@@ -189,6 +194,7 @@
     chatContainer.appendChild(userDiv);
 
     userInput.value = '';
+    userInput.style.height = '24px'; /* 送信後に入力欄の高さを初期値に戻す */
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
     conversationHistory.push({ role: 'user', parts: [{ text: text }] });
