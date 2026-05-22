@@ -102,7 +102,17 @@
 <script>
   const chatContainer = document.getElementById('chat-container');
   const userInput = document.getElementById('userInput');
-  let conversationHistory = JSON.parse(sessionStorage.getItem('chatHistory')) || [];
+  
+  // 原因修正：JSONデータの配列構造（parts[0].text）に正しく対応
+  let conversationHistory = [];
+  try {
+    const saved = localStorage.getItem('chatHistory');
+    if (saved) {
+      conversationHistory = JSON.parse(saved);
+    }
+  } catch (e) {
+    conversationHistory = [];
+  }
 
   window.addEventListener('DOMContentLoaded', () => {
     conversationHistory.forEach(msg => {
@@ -146,7 +156,7 @@
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
     conversationHistory.push({ role: 'user', parts: [{ text: text }] });
-    sessionStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
+    localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
 
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'loading-message';
@@ -171,7 +181,7 @@
       typeWriter(aiDiv, data.text);
 
       conversationHistory.push({ role: 'model', parts: [{ text: data.text }] });
-      sessionStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
+      localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
 
     } catch (error) {
       loadingDiv.remove();
