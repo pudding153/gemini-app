@@ -196,7 +196,7 @@
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
     try {
-      const response = await fetch('https://gemini-app-mp93.onrender.com/api/chat', {
+      const response = await fetch('https://onrender.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ history: conversationHistory })
@@ -212,6 +212,26 @@
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullText = '';
+      let displayedText = '';
+      let queue = [];
+      let isTyping = false;
+
+      function startTyping() {
+        if (isTyping || queue.length === 0) return;
+        isTyping = true;
+        
+        function type() {
+          if (queue.length > 0) {
+            displayedText += queue.shift();
+            aiDiv.textContent = displayedText;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            setTimeout(type, 30);
+          } else {
+            isTyping = false;
+          }
+        }
+        type();
+      }
 
       while (true) {
         const { done, value } = await reader.read();
@@ -219,8 +239,12 @@
         
         const chunk = decoder.decode(value, { stream: true });
         fullText += chunk;
-        aiDiv.textContent = fullText;
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        queue.push(...chunk.split(''));
+        startTyping();
+      }
+
+      while (isTyping || queue.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
       conversationHistory.push({ role: 'model', parts: [{ text: fullText }] });
