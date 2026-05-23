@@ -160,7 +160,7 @@
 
   <div id="btn-container">
     <button id="reset-btn" class="action-btn" onclick="clearHistory()">リセット</button>
-    <button id="error-clear-btn" class="action-btn" onclick="clearLastError()">エラー履歴クリア</button>
+    <button id="error-clear-btn" class="action-btn" onclick="clearLastError()">一つ前に戻る</button>
   </div>
 
   <div id="chat-container"></div>
@@ -238,7 +238,7 @@
 
     // 最後のメッセージがAIの応答でない（＝ユーザーの質問で止まっている、または不整合がある）場合
     // 直近のユーザーメッセージを1件削除してAPIエラーのループを防ぐ
-    if (confirm('直近のエラー原因となった可能性のあるメッセージを履歴から削除しますか？')) {
+    if (confirm('一つ前のメッセージを削除しますか？')) {
       conversationHistory.pop(); 
       localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
       
@@ -320,7 +320,7 @@
 
       const errorDiv = document.createElement('div');
       errorDiv.className = 'message ai-message';
-      errorDiv.textContent = '通信エラーが発生しました。再度送信するか、エラー履歴クリアをお試しください。';
+      errorDiv.textContent = '通信エラーが発生しました。再度送信するか、「一つ前に戻る」をお試しください。';
       chatContainer.appendChild(errorDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
