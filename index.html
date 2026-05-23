@@ -16,24 +16,41 @@
       height: 100vh;
     }
 
-    #reset-btn {
+    #btn-container {
       position: fixed;
       top: 10px;
       left: 10px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .action-btn {
       padding: 6px 12px;
-      border: 1px solid #ff4d4d;
       border-radius: 15px;
       background-color: #1e1e1e;
-      color: #ff4d4d;
       font-size: 13px;
       font-weight: bold;
       cursor: pointer;
-      z-index: 100;
       transition: background-color 0.2s;
+    }
+
+    #reset-btn {
+      border: 1px solid #ff4d4d;
+      color: #ff4d4d;
     }
 
     #reset-btn:active {
       background-color: rgba(255, 77, 77, 0.2);
+    }
+
+    #error-clear-btn {
+      border: 1px solid #ffb703;
+      color: #ffb703;
+    }
+
+    #error-clear-btn:active {
+      background-color: rgba(255, 183, 3, 0.2);
     }
 
     #chat-container {
@@ -141,7 +158,10 @@
 </head>
 <body>
 
-  <button id="reset-btn" onclick="clearHistory()">リセット</button>
+  <div id="btn-container">
+    <button id="reset-btn" class="action-btn" onclick="clearHistory()">リセット</button>
+    <button id="error-clear-btn" class="action-btn" onclick="clearLastError()">エラー履歴クリア</button>
+  </div>
 
   <div id="chat-container"></div>
 
@@ -210,6 +230,26 @@
     }
   }
 
+  function clearLastError() {
+    if (conversationHistory.length === 0) {
+      alert('削除する履歴はありません。');
+      return;
+    }
+
+    // 最後のメッセージがAIの応答でない（＝ユーザーの質問で止まっている、または不整合がある）場合
+    // 直近のユーザーメッセージを1件削除してAPIエラーのループを防ぐ
+    if (confirm('直近のエラー原因となった可能性のあるメッセージを履歴から削除しますか？')) {
+      conversationHistory.pop(); 
+      localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
+      
+      // 画面の表示を再更新
+      chatContainer.innerHTML = '';
+      conversationHistory.forEach(msg => renderMessage(msg));
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      alert('直近の送信メッセージを削除しました。もう一度お試しください。');
+    }
+  }
+
   function adjustHeight() {
     userInput.style.height = '24px';
     userInput.style.height = (userInput.scrollHeight - 24) + 'px';
@@ -253,6 +293,10 @@
         body: JSON.stringify({ history: conversationHistory })
       });
       
+      if (!response.ok) {
+        throw new Error('Server response error');
+      }
+
       const data = await response.json();
       loadingDiv.remove();
 
@@ -267,9 +311,16 @@
 
     } catch (error) {
       loadingDiv.remove();
+      
+      // 通信エラーが起きた場合、直前に追加したuserメッセージを配列から取り除く（保存しない）
+      if (conversationHistory.length > 0 && conversationHistory[conversationHistory.length - 1].role === 'user') {
+        conversationHistory.pop();
+        localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
+      }
+
       const errorDiv = document.createElement('div');
       errorDiv.className = 'message ai-message';
-      errorDiv.textContent = '通信エラーが発生しました。';
+      errorDiv.textContent = '通信エラーが発生しました。再度送信するか、エラー履歴クリアをお試しください。';
       chatContainer.appendChild(errorDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
