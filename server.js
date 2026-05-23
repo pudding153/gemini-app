@@ -13,18 +13,20 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { history } = req.body;
 
+    const searchTool = { googleSearch: {} };
+
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite',
+      model: 'gemini-3.1-flash-lite', 
       contents: history,
       config: {
         systemInstruction: "あなたは親切で優秀なAIアシスタントです。ユーザーとのここまでの会話の流れ（過去の文脈）をすべて把握した上で、自然に会話を続けてください。回答は必ず【最大300文字以内】で要約して簡潔に伝えてください。",
-        tools: [{ googleSearch: {} }]
+        tools: [searchTool]
       }
     });
 
     res.json({ text: response.text });
   } catch (error) {
-    console.error(error);
+    console.error("Gemini API Error Detail:", error);
     res.status(500).json({ error: 'サーバーエラーが発生しました' });
   }
 });
