@@ -10,10 +10,10 @@ app.post('/api/chat', async (req, res) => {
 try {
 const { history } = req.body;
 const response = await ai.models.generateContent({
-model: 'gemma-4-31b-it',
+model: 'gemini-3.5-flash',
 contents: history,
 config: {
-systemInstruction: "あなたは親切で優秀なAIアシスタントです。ユーザーとのここまでの会話の流れ（過去の文脈）をすべて把握した上で、自然に会話を続けてください。回答は必ず【最大300文字以内】で要約して簡潔に伝えてください。また、結論から短く簡潔に答えることで、できる限り素早く返答を返してください。"
+systemInstruction: "あなたは親切で優秀なAIアシスタントです。ユーザーとのここまでの会話の流れ（過去の文脈）をすべて把握した上で、自然に会話を続けてください。回答は必ず【最大300文字以内】で要約して簡潔に伝えてください。"
 }
 });
 res.json({ text: response.text });
