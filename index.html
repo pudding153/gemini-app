@@ -78,13 +78,12 @@
 
     .input-area {
       display: flex;
-      align-items: flex-end; /* テキストエリアが伸びてもボタンが下に固定されるように設定 */
+      align-items: flex-end;
       padding: 10px;
       background-color: #2d2d2d;
       gap: 10px;
     }
 
-    /* inputからtextareaに変更し、自動高さ調整に対応 */
     textarea {
       flex: 1;
       padding: 12px;
@@ -94,14 +93,14 @@
       color: #ffffff;
       font-size: 16px;
       outline: none;
-      resize: none; /* ユーザーが手動でサイズ変更するのを禁止 */
-      height: 24px; /* 初期高さ */
+      resize: none;
+      height: 24px;
       font-family: sans-serif;
       line-height: 1.5;
     }
 
     .send-btn {
-      padding: 12px 20px; /* 入力欄と高さを合わせる */
+      padding: 12px 20px;
       border: none;
       border-radius: 20px;
       background-color: #3a86ff;
@@ -124,7 +123,6 @@
   <div id="chat-container"></div>
 
   <div class="input-area">
-    <!-- inputからtextareaに変更 -->
     <textarea id="userInput" placeholder="メッセージを入力..." oninput="adjustHeight()"></textarea>
     <button class="send-btn" onclick="sendMessage()">送信</button>
   </div>
@@ -170,18 +168,9 @@
     }
   }
 
-  /* 入力文字数に合わせてテキストエリアの高さを自動調整する関数 */
   function adjustHeight() {
-    userInput.style.height = '24px'; /* 一度リセット */
-    userInput.style.height = (userInput.scrollHeight - 24) + 'px'; /* 中身に合わせて伸縮 */
-  }
-
-  function typeWriter(element, text, index = 0) {
-    if (index < text.length) {
-      element.textContent += text.charAt(index);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-      setTimeout(() => typeWriter(element, text, index + 1), 30);
-    }
+    userInput.style.height = '24px';
+    userInput.style.height = (userInput.scrollHeight - 24) + 'px';
   }
 
   async function sendMessage() {
@@ -194,7 +183,7 @@
     chatContainer.appendChild(userDiv);
 
     userInput.value = '';
-    userInput.style.height = '24px'; /* 送信後に入力欄の高さを初期値に戻す */
+    userInput.style.height = '24px';
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
     conversationHistory.push({ role: 'user', parts: [{ text: text }] });
@@ -213,16 +202,28 @@
         body: JSON.stringify({ history: conversationHistory })
       });
       
-      const data = await response.json();
+      if (!response.ok) throw new Error();
       loadingDiv.remove();
 
       const aiDiv = document.createElement('div');
       aiDiv.className = 'message ai-message';
       chatContainer.appendChild(aiDiv);
 
-      typeWriter(aiDiv, data.text);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
 
-      conversationHistory.push({ role: 'model', parts: [{ text: data.text }] });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        fullText += chunk;
+        aiDiv.textContent = fullText;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+
+      conversationHistory.push({ role: 'model', parts: [{ text: fullText }] });
       localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
 
     } catch (error) {
