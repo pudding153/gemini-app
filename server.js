@@ -13,7 +13,7 @@ app.post('/api/chat', async (req, res) => {
 try {
 const { history } = req.body;
 
-const response = await ai.models.generateContent({
+const response = await ai.models.generateContentStream({
       model: 'gemini-3.1-flash-lite',
 contents: history,
 config: {
@@ -21,7 +21,10 @@ systemInstruction: "あなたは親切で優秀なAIアシスタントです。�
 }
 });
 
-res.json({ text: response.text });
+for await (const chunk of response) {
+  res.write(chunk.text);
+}
+res.end();
 } catch (error) {
 console.error(error);
 res.status(500).json({ error: 'サーバーエラーが発生しました' });
