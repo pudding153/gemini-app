@@ -21,7 +21,6 @@ systemInstruction: "あなたは親切で優秀なAIアシスタントです。�
 tools: [{ googleSearch: {} }]
 }
 });
-
 res.json({ text: response.text });
 } catch (error) {
 console.error(error);
