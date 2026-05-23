@@ -13,8 +13,7 @@ const response = await ai.models.generateContent({
 model: 'gemma-4-31b-it',
 contents: history,
 config: {
-systemInstruction: "あなたは親切で優秀なAIアシスタントです。ユーザーとのここまでの会話の流れ（過去の文脈）をすべて把握した上で、自然に会話を続けてください。回答は必ず【最大300文字以内】で要約して簡潔に伝えてください。また、思考プロセスは省略し、すぐに回答のテキストのみを出力してください。",
-maxOutputTokens: 400
+systemInstruction: "あなたは親切で優秀なAIアシスタントです。ユーザーとのここまでの会話の流れ（過去の文脈）をすべて把握した上で、自然に会話を続けてください。回答は必ず【最大300文字以内】で要約して簡潔に伝えてください。また、結論から短く簡潔に答えることで、できる限り素早く返答を返してください。"
 }
 });
 res.json({ text: response.text });
