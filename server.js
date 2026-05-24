@@ -15,7 +15,10 @@ app.post('/api/chat', async (req, res) => {
 
     const recentHistory = Array.isArray(history) ? history.slice(-10) : history;
 
-    const response = await ai.models.generateContent({
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    const responseStream = await ai.models.generateContentStream({
       model: 'gemini-3.1-flash-lite',
       contents: recentHistory,
       config: {
@@ -23,10 +26,18 @@ app.post('/api/chat', async (req, res) => {
       }
     });
 
-    res.json({ text: response.text });
+    for await (const chunk of responseStream) {
+      if (chunk.text) {
+        res.write(chunk.text);
+      }
+    }
+
+    res.end();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'サーバーエラーが発生しました' });
+    if (!res.headersSent) {
+      res.status(500).end();
+    }
   }
 });
 
