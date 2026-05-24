@@ -236,13 +236,10 @@
       return;
     }
 
-    // 最後のメッセージがAIの応答でない（＝ユーザーの質問で止まっている、または不整合がある）場合
-    // 直近のユーザーメッセージを1件削除してAPIエラーのループを防ぐ
     if (confirm('一つ前のメッセージを削除しますか？')) {
       conversationHistory.pop(); 
       localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
       
-      // 画面の表示を再更新
       chatContainer.innerHTML = '';
       conversationHistory.forEach(msg => renderMessage(msg));
       chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -253,15 +250,6 @@
   function adjustHeight() {
     userInput.style.height = '24px';
     userInput.style.height = (userInput.scrollHeight - 24) + 'px';
-  }
-
-  function typeWriter(element, text, index = 0, currentText = "") {
-    if (index < text.length) {
-      currentText += text.charAt(index);
-      element.innerHTML = parseMarkdown(currentText);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-      setTimeout(() => typeWriter(element, text, index + 1, currentText), 30);
-    }
   }
 
   async function sendMessage() {
@@ -297,35 +285,38 @@
         throw new Error('Server response error');
       }
 
-      const data = await response.json();
       loadingDiv.remove();
 
       const aiDiv = document.createElement('div');
       aiDiv.className = 'message ai-message';
       chatContainer.appendChild(aiDiv);
 
-      typeWriter(aiDiv, data.text);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let aiResponseText = "";
 
-      conversationHistory.push({ role: 'model', parts: [{ text: data.text }] });
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        aiResponseText += decoder.decode(value, { stream: true });
+        aiDiv.innerHTML = parseMarkdown(aiResponseText);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+
+      conversationHistory.push({ role: 'model', parts: [{ text: aiResponseText }] });
       localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
 
     } catch (error) {
-      loadingDiv.remove();
+      if (loadingDiv) loadingDiv.remove();
       
-      // 通信エラーが起きた場合、直前に追加したuserメッセージを配列から取り除く（保存しない）
       if (conversationHistory.length > 0 && conversationHistory[conversationHistory.length - 1].role === 'user') {
         conversationHistory.pop();
         localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
       }
-
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'message ai-message';
-      errorDiv.textContent = '通信エラーが発生しました。再度送信するか、「一つ前に戻る」をお試しください。';
-      chatContainer.appendChild(errorDiv);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      alert('エラーが発生しました。もう一度お試しください。');
     }
   }
 </script>
-
 </body>
 </html>
