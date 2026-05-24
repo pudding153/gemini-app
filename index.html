@@ -252,6 +252,22 @@
     userInput.style.height = (userInput.scrollHeight - 24) + 'px';
   }
 
+  let fullResponseText = "";
+  let currentDisplayIndex = 0;
+  let isTyping = false;
+
+  function processTypeWriter(element) {
+    if (currentDisplayIndex < fullResponseText.length) {
+      isTyping = true;
+      currentDisplayIndex++;
+      element.innerHTML = parseMarkdown(fullResponseText.substring(0, currentDisplayIndex));
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      setTimeout(() => processTypeWriter(element), 30);
+    } else {
+      isTyping = false;
+    }
+  }
+
   async function sendMessage() {
     const text = userInput.value.trim();
     if (!text) return;
@@ -293,18 +309,23 @@
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let aiResponseText = "";
+      
+      fullResponseText = "";
+      currentDisplayIndex = 0;
+      isTyping = false;
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
 
-        aiResponseText += decoder.decode(value, { stream: true });
-        aiDiv.innerHTML = parseMarkdown(aiResponseText);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        fullResponseText += decoder.decode(value, { stream: true });
+        
+        if (!isTyping) {
+          processTypeWriter(aiDiv);
+        }
       }
 
-      conversationHistory.push({ role: 'model', parts: [{ text: aiResponseText }] });
+      conversationHistory.push({ role: 'model', parts: [{ text: fullResponseText }] });
       localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
 
     } catch (error) {
