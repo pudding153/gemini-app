@@ -15,9 +15,11 @@ app.post('/api/chat', async (req, res) => {
 
     const recentHistory = Array.isArray(history) ? history.slice(-10) : history;
 
+    // レスポンスを細切れ（ストリーミング）で返すための設定
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Transfer-Encoding', 'chunked');
 
+    // generateContentStream に変更
     const responseStream = await ai.models.generateContentStream({
       model: 'gemini-3.1-flash-lite',
       contents: recentHistory,
@@ -26,6 +28,7 @@ app.post('/api/chat', async (req, res) => {
       }
     });
 
+    // 文字が生成されるたびに、即座にブラウザへ送信
     for await (const chunk of responseStream) {
       if (chunk.text) {
         res.write(chunk.text);
