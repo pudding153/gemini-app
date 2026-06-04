@@ -13,7 +13,7 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { history } = req.body;
 
-    const recentHistory = Array.isArray(history) ? history.slice(-10) : history;
+    const recentHistory = Array.isArray(history) ? history.slice(-100) : history;
 
     // レスポンスを細切れ（ストリーミング）で返すための設定
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
